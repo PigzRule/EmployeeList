@@ -3,7 +3,15 @@ import logging
 
 logging.basicConfig(filename='employee_directory.log', level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
 
-
+def create_user_table(cursor):
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT
+        )
+    ''')
 
 def create_employee_table(cursor):
     cursor.execute('''
@@ -17,6 +25,13 @@ def create_employee_table(cursor):
             skills TEXT
         )
     ''')
+
+def authenticate_user(cursor, username, password):
+    cursor.execute('''
+        SELECT * FROM users
+        WHERE username = ? AND password = ?
+    ''', (username, password))
+    return cursor.fetchone()
 
 def add_employee(cursor, name, department, position, contact, job_history, skills):
     try:
@@ -62,13 +77,31 @@ def delete_employee(cursor, employee_id):
         logging.error("Error deleting employee: %s", e)
         raise e
     
-# Main function
 def main():
     conn = sqlite3.connect('employee_directory.db')
     cursor = conn.cursor()
 
-    # Create the employee table if it does not exist
+    create_user_table(cursor)
     create_employee_table(cursor)
+
+    cursor.execute('''
+        INSERT OR IGNORE INTO users (username, password, role)
+        VALUES (?, ?, ?)
+    ''', ('admin', 'admin123', 'admin'))
+    conn.commit()
+
+    # Authentication Loop
+    while True:
+        username = input("Enter username: ")
+        password = input("Enter password: ")
+
+        user = authenticate_user(cursor, username, password)
+
+        if user:
+            print("Login successful!")
+            break
+        else:
+            print("Invalid username or password. Please try again.")
 
     while True:
         print("\nEmployee Directory")
@@ -81,24 +114,26 @@ def main():
         choice = input("Enter your choice: ")
 
         if choice == '1':
-            try:
-                name = input("Enter employee name: ")
-                department = input("Enter employee department: ")
-                position = input("Enter employee position: ")
-                contact = input("Enter employee contact details: ")
-                job_history = input("Enter employee job history: ")
-                skills = input("Enter employee skills: ")
-                
-                # Added input validation
-                if not (name and department and position):
-                    raise ValueError("Name, department, and position cannot be empty.")
-                
-                add_employee(cursor, name, department, position, contact, job_history, skills)
-                conn.commit()
-                print("Employee added successfully!")
-            except Exception as e:
-                print("Error:", e)
-        
+            if user[3] == 'admin':
+                try:
+                    name = input("Enter employee name: ")
+                    department = input("Enter employee department: ")
+                    position = input("Enter employee position: ")
+                    contact = input("Enter employee contact details: ")
+                    job_history = input("Enter employee job history: ")
+                    skills = input("Enter employee skills: ")
+                    
+                    if not (name and department and position):
+                        raise ValueError("Name, department, and position cannot be empty.")
+                    
+                    add_employee(cursor, name, department, position, contact, job_history, skills)
+                    conn.commit()
+                    print("Employee added successfully!")
+                except Exception as e:
+                    print("Error:", e)
+            else:
+                print("You don't have permission to perform this action")
+
         elif choice == '2':
             criteria = input("Enter search criteria: ")
             results = search_employees(cursor, criteria)
@@ -110,29 +145,35 @@ def main():
                 print("No matching employees found.")
 
         elif choice == '3':
-            try:
-                employee_id = int(input("Enter employee ID to update: "))
-                name = input("Enter updated employee name: ")
-                department = input("Enter updated employee department: ")
-                position = input("Enter updated employee position: ")
-                contact = input("Enter updated employee contact details: ")
-                job_history = input("Enter updated employee job history: ")
-                skills = input("Enter updated employee skills: ")
-                
-                update_employee(cursor, employee_id, name, department, position, contact, job_history, skills)
-                conn.commit()
-                print("Employee information updated successfully!")
-            except Exception as e:
-                print("Error:", e)
+            if user[3] == 'admin':
+                try:
+                    employee_id = int(input("Enter employee ID to update: "))
+                    name = input("Enter updated employee name: ")
+                    department = input("Enter updated employee department: ")
+                    position = input("Enter updated employee position: ")
+                    contact = input("Enter updated employee contact details: ")
+                    job_history = input("Enter updated employee job history: ")
+                    skills = input("Enter updated employee skills: ")
+                    
+                    update_employee(cursor, employee_id, name, department, position, contact, job_history, skills)
+                    conn.commit()
+                    print("Employee information updated successfully!")
+                except Exception as e:
+                    print("Error:", e)
+            else:
+                print("You don't have permission to perform this action.")
 
         elif choice == '4':
-            try:
-                employee_id = int(input("Enter employee ID to delete: "))
-                delete_employee(cursor, employee_id)
-                conn.commit()
-                print("Employee deleted successfully!")
-            except Exception as e:
-                print("Error:", e)
+            if user[3] == 'admin':
+                try:
+                    employee_id = int(input("Enter employee ID to delete: "))
+                    delete_employee(cursor, employee_id)
+                    conn.commit()
+                    print("Employee deleted successfully!")
+                except Exception as e:
+                    print("Error:", e)
+            else:
+                print("You don't have permission to perform this action.")
 
         elif choice == '5':
             break
