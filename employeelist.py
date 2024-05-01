@@ -14,6 +14,9 @@ def create_employee_table(cursor):
     ''')
 
 def add_employee(cursor, name, department, position, contact, job_history, skills):
+    if not (name and department and position):
+        raise ValueError("Name, department, and position cannot be empty")
+    
     cursor.execute('''
         INSERT INTO employees (name, department, position, contact, job_history, skills)
         VALUES (?, ?, ?, ?, ?, ?)
