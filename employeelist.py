@@ -1,4 +1,9 @@
 import sqlite3
+import logging
+
+logging.basicConfig(filename='employee_directory.log', level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
+
+
 
 def create_employee_table(cursor):
     cursor.execute('''
@@ -14,13 +19,18 @@ def create_employee_table(cursor):
     ''')
 
 def add_employee(cursor, name, department, position, contact, job_history, skills):
-    if not (name and department and position):
-        raise ValueError("Name, department, and position cannot be empty")
-    
-    cursor.execute('''
-        INSERT INTO employees (name, department, position, contact, job_history, skills)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (name, department, position, contact, job_history, skills))
+    try:
+        if not (name and department and position):
+            raise ValueError("Name, department, and position cannot be empty")
+        
+        cursor.execute('''
+            INSERT INTO employees (name, department, position, contact, job_history, skills)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (name, department, position, contact, job_history, skills))
+        logging.info("Employee added: Name - %s, Department - %s, Position - %s", name, department, position)
+    except Exception as e:
+        logging.error("Error adding employee: %s", e)
+        raise e
 
 def search_employees(cursor, criteria):
     cursor.execute('''
@@ -30,17 +40,28 @@ def search_employees(cursor, criteria):
     return cursor.fetchall()
 
 def update_employee(cursor, employee_id, name, department, position, contact, job_history, skills):
-    cursor.execute('''
-        UPDATE employees
-        SET name = ?, department = ?, position = ?, contact = ?, job_history = ?, skills = ?
-        WHERE id = ?
-    ''', (name, department, position, contact, job_history, skills, employee_id))
-def delete_employee(cursor, employee_id):
-    cursor.execute('''
-        DELETE FROM employees
-        WHERE id = ?
-    ''', (employee_id,))
+    try:
+        cursor.execute('''
+            UPDATE employees
+            SET name = ?, department = ?, position = ?, contact = ?, job_history = ?, skills = ?
+            WHERE id = ?
+        ''', (name, department, position, contact, job_history, skills, employee_id))
+        logging.info("Employee updated: ID - %d, Name - %s, Department - %s, Position - %s", employee_id, name, department, position)
+    except Exception as e:
+        logging.error("Error updating employee: %s", e)
+        raise e
 
+def delete_employee(cursor, employee_id):
+    try:
+        cursor.execute('''
+            DELETE FROM employees
+            WHERE id = ?
+        ''', (employee_id,))
+        logging.info("Employee deleted: ID - %d", employee_id)
+    except Exception as e:
+        logging.error("Error deleting employee: %s", e)
+        raise e
+    
 # Main function
 def main():
     conn = sqlite3.connect('employee_directory.db')
@@ -97,10 +118,6 @@ def main():
                 contact = input("Enter updated employee contact details: ")
                 job_history = input("Enter updated employee job history: ")
                 skills = input("Enter updated employee skills: ")
-                
-                # Added input validation
-                if not (name and department and position):
-                    raise ValueError("Name, department, and position cannot be empty.")
                 
                 update_employee(cursor, employee_id, name, department, position, contact, job_history, skills)
                 conn.commit()
