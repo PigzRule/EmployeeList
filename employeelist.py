@@ -33,6 +33,13 @@ def authenticate_user(cursor, username, password):
     ''', (username, password))
     return cursor.fetchone()
 
+def register_user(cursor, username, password, role):
+    cursor.execute('''
+        INSERT INTO users (username, password, role)
+        VALUES (?, ?, ?)
+    ''', (username, password, role))
+    logging.info("User registered: Username - %s, Role - %s", username, role)
+
 def add_employee(cursor, name, department, position, contact, job_history, skills):
     try:
         if not (name and department and position):
@@ -47,12 +54,27 @@ def add_employee(cursor, name, department, position, contact, job_history, skill
         logging.error("Error adding employee: %s", e)
         raise e
 
-def search_employees(cursor, criteria):
-    cursor.execute('''
+def search_employees(cursor, criteria, sort_by=None, filter_by=None, per_page=10, page=1):
+    offset = (page - 1) * per_page
+    query = '''
         SELECT * FROM employees
         WHERE name LIKE ? OR department LIKE ? OR position LIKE ? OR contact LIKE ? OR job_history LIKE ? OR skills LIKE ?
-    ''', ('%{}%'.format(criteria), '%{}%'.format(criteria), '%{}%'.format(criteria), '%{}%'.format(criteria), '%{}%'.format(criteria), '%{}%'.format(criteria)))
+    '''
+    params = ['%{}%'.format(criteria)] * 6
+
+    if filter_by:
+        query += ' AND {} = ?'.format(filter_by[0])
+        params.append(filter_by[1])
+
+    if sort_by:
+        query += ' ORDER BY {}'.format(sort_by)
+
+    query += ' LIMIT ? OFFSET ?'
+    params.extend([per_page, offset])
+
+    cursor.execute(query, tuple(params))
     return cursor.fetchall()
+
 
 def update_employee(cursor, employee_id, name, department, position, contact, job_history, skills):
     try:
@@ -136,13 +158,31 @@ def main():
 
         elif choice == '2':
             criteria = input("Enter search criteria: ")
-            results = search_employees(cursor, criteria)
-            if results:
-                print("\nSearch Results:")
-                for employee in results:
-                    print(employee)
-            else:
-                print("No matching employees found.")
+            per_page = int(input("Enter number of results per page: "))
+            page = 1
+
+            sort_by = input("Enter column to sort by (name, department, position), or leave blank: ").strip()
+            filter_column = input("Enter column to filter by (name, department, position), or leave blank: ").strip()
+            filter_value = input("Enter filter value, or leave blank: ").strip()
+
+            sort_by = sort_by if sort_by else None
+            filter_by = (filter_column, filter_value) if filter_column and filter_value else None
+
+            while True:
+                results = search_employees(cursor, criteria, sort_by, filter_by, per_page, page)
+                if results:
+                    print("\nSearch Results (Page {}):".format(page))
+                    for employee in results:
+                        print(employee)
+                    next_page = input("Enter 'n' to view next page, any other key to exit: ")
+                    if next_page.lower() == 'n':
+                        page += 1
+                    else:
+                        break
+                else:
+                    print("No matching employees found.")
+                    break
+
 
         elif choice == '3':
             if user[3] == 'admin':
