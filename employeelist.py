@@ -1,5 +1,6 @@
 import sqlite3
 import logging
+import csv
 
 logging.basicConfig(filename='employee_directory.log', level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -98,6 +99,36 @@ def delete_employee(cursor, employee_id):
     except Exception as e:
         logging.error("Error deleting employee: %s", e)
         raise e
+    
+def export_to_csv(cursor, filename='employee_data.csv'):
+    cursor.execute("SELECT * FROM employees")
+    rows = cursor.fetchall()
+    if not rows:
+        print("No data to export.")
+        return
+
+    try:
+        with open(filename, 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow(['ID', 'Name', 'Department', 'Position', 'Contact', 'Job History', 'Skills'])
+            csv_writer.writerows(rows)
+        print(f"Employee data exported to {filename} successfully.")
+    except Exception as e:
+        print("Error exporting data:", e)
+
+def import_from_csv(cursor, filename='employee_data.csv'):
+    try:
+        with open(filename, 'r') as csvfile:
+            csv_reader = csv.reader(csvfile)
+            next(csv_reader)
+            for row in csv_reader:
+                cursor.execute('''
+                    INSERT INTO employees (name, department, position, contact, job_history, skills)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (row[1], row[2], row[3], row[4], row[5], row[6]))
+            print(f"Employee data imported from {filename} successfully.")
+    except Exception as e:
+        print("Error importing data:", e)
     
 def main():
     conn = sqlite3.connect('employee_directory.db')
