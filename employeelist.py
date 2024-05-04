@@ -1,7 +1,8 @@
 import sqlite3
 import logging
-import tkinter as tk
-from tkinter import messagebox
+import shutil
+import os
+import datetime
 import csv
 import getpass
 
@@ -241,6 +242,23 @@ def manage_users(conn, cursor, user):
         print("Invalid choice. Please enter a valid option.")
         manage_users(cursor, user)
 
+def backup_database(source_db, backup_folder, user_role=None):
+    try:
+        if user_role != 'admin':
+            raise PermissionError("Only admins are allowed to perform database backups.")
+
+        if not os.path.exists(backup_folder):
+            os.makedirs(backup_folder)
+
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_file = os.path.join(backup_folder, f"employee_directory_backup_{timestamp}.db")
+
+        shutil.copy(source_db, backup_file)
+        print("Backup completed successfully!")
+    except Exception as e:
+        print("Error during backup:", e)
+
+
 
 def main():
     conn = sqlite3.connect('employee_directory.db')
@@ -277,7 +295,8 @@ def main():
         print("5. Import Data from CSV (Admin)")
         print("6. Export Data to CSV (Admin)")
         print("7. User Management (Admin)")
-        print("8. Exit")
+        print("8. Backup Database")
+        print("9. Exit")
 
         choice = input("Enter your choice: ")
 
@@ -397,6 +416,11 @@ def main():
                 print("You don't have permission to perform this action.")
 
         elif choice == '8':
+            backup_folder = input("Enter the backup folder path: ")
+            backup_database('employee_directory.db', backup_folder, user[3])
+
+        
+        elif choice == '9':
             break
 
         else:

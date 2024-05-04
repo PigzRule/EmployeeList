@@ -1,0 +1,12 @@
+2024-05-03 19:26:18,719 - INFO - User registered: Username - willh, Role - user
+2024-05-03 19:27:51,665 - INFO - Employee deleted: ID - 1
+2024-05-03 19:28:43,469 - INFO - Employee added: Name - Will H, Department - Cybersecurity, Position - Student
+2024-05-03 19:36:09,296 - INFO - User deleted: Username - willh
+2024-05-03 19:36:26,744 - INFO - User registered: Username - Will, Role - user
+2024-05-03 19:41:57,067 - INFO - User deleted: Username - willh
+2024-05-03 19:42:03,456 - INFO - User deleted: Username - Will
+2024-05-03 19:42:28,673 - INFO - User registered: Username - willh, Role - user
+2024-05-03 19:50:45,876 - INFO - User registered: Username - Will, Role - user
+2024-05-03 20:06:47,014 - INFO - Employee updated by user: ID - 1, Name - , Department - , Position - 
+2024-05-03 20:07:09,680 - INFO - Employee updated by admin: ID - 2, Name - , Department - , Position - 
+2024-05-03 20:14:49,875 - INFO - Employee added: Name - Bob, Department - Construction, Position - Builder
