@@ -29,10 +29,6 @@
 
 ## Technologies Used
 
-- **HTML5**: For the user interface structure.
-- **CSS3**: To style the interface.
-- **JavaScript**: For front-end interactivity.
-- **PHP**: For server-side logic and authentication.
 - **MySQL**: Database for storing employee records and user credentials.
 
 ---
