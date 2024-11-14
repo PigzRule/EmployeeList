@@ -30,6 +30,7 @@
 ## Technologies Used
 
 - **MySQL**: Database for storing employee records and user credentials.
+- **Python**: Program to create database tables and publishing with CSV
 
 ---
 
